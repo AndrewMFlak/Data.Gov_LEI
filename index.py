@@ -56,6 +56,12 @@ def enumerate(collection, start=0):
 def scrape():
     print('some shit')
 
+def live():
+        print('live actions to take')
+
+def not_live():
+        print('not_live actions to take')
+
 live = []
 nonLive = []
 records = []
@@ -66,13 +72,68 @@ Finished = False
 # context=ctx to bypass SSL ERROR
 html = urllib.request.urlopen(url,context=ctx).read()
 soup = BeautifulSoup(html, 'html.parser')
+#====================ParentDiv parse============================>
 parentDiv = soup.find('section', {'class':'results row'})
-totalContainer = soup.find_all('h1')
+#===============================================================>
 
-for child in parentDiv.descendants:
-    print(child)
-    total = child.em
-    print(total)
+
+#====================TotalValue parse============================>
+totalContainer = parentDiv.find_all('h1')
+for line in totalContainer:
+        # print(type(line))
+        Total=line.get_text()
+        print(Total)
+#===============================================================>
+
+
+#====================itemInfo parse==============================>
+liveItemCount = 0
+liveItems = ''
+not_liveItems = ''
+contentContainer = parentDiv.find('ul', {'class':'results-list with-flags'})
+itemContainer = contentContainer('li')
+# print(itemContainer)
+liveItems = contentContainer.find_all('li', {'class':'live'})
+# print(liveItems)
+not_liveItems = contentContainer.find_all('li',{'class':'not_live'})
+#=============================Live======================================>
+for liveItem in liveItems:
+        item
+#=======================================================================>
+
+#============================Not_Live===================================>
+for not_liveItem in not_liveItems:
+        print(not_liveItem)
+#=======================================================================>
+
+# liveItems.append(itemContainer.find_all('li',{'class':'live'}))
+# not_liveItems.append(itemContainer.find_all('li',{'class':'not_live'}))
+# print(not_liveItems)
+# for item in itemContainer:
+#         liveItems.append()
+#         print('live: ',liveItems)
+#         not_liveItems.append()
+#         print('not_live: ',not_liveItems)
+
+        # if item.find('li', {'class'}) == 'live':
+        #         print('live:',item)
+        # elif item.find('li',{'class'}) == 'not_live':
+        #         print('not_live: ',item)
+        # else:
+        #         break
+        #Filter live/non_live first
+        # itemCount = itemCount + 1
+        # print(item)
+#===============================================================>
+
+
+# for child in parentDiv.descendants:
+#     print(child)
+
+# totalDiv = soup.find('section', {'class':'results row'})
+# totalContainer = soup.find('h1')
+
+# 
     # while Total == '':
     #     totCondition = child.find('h1')
     #     print(totCondition.contents)
