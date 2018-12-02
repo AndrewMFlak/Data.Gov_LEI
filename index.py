@@ -1,8 +1,9 @@
 import pandas as pd
 from bs4 import BeautifulSoup
 import urllib.request, urllib.parse, urllib.error
+import substring
 #check out 
-#ignores SSL certificate errors
+#===================SSL certificate errors=====================>
 import ssl
 ctx = ssl.create_default_context()
 ctx.check_hostname = False
@@ -15,63 +16,37 @@ from dotenv import load_dotenv
 dotenv_path = join(dirname(__file__),'.env')
 load_dotenv(dotenv_path)
 
-dgAPIkey=os.getenv('dataGovAPI')
+#data.gov API key not necessary
+# dgAPIkey=os.getenv('dataGovAPI')
 # print(dgAPIkey)
 #==============================================================>
 
-# placeholder = 'www.p-lei.org'
-# placeholder = 'http://openleis.com/legal_entities'
 
-
-# url = input('Enter URL to GET please....')
-# if url != '':
-#     url = url
-# else:
-#     url = placeholder
-
-
-#request/open/get html content
-# html = urllib.request.urlopen(placeholder).read()
-
-# soup = BeautifulSoup(html,'html.parser')
-
-# tags = soup('a')
-# print(soup)
-
-
-#======================================================>
-url = 'http://openleis.com/legal_entities'
-filePath = '/search/page/'
-page = 2
-#======================================================>
-# could add stop=None
-# could modify to `while i != stop:`
-def enumerate(collection, start=0):
-    i = start
-    it = iter(collection)
-    while 1:
-        yield (i,next(it))
-        i += 1
-
-def scrape():
-    print('some shit')
-
-def live():
-        print('live actions to take')
-
-def not_live():
-        print('not_live actions to take')
-
+#========misc variable===========================================>
 live = []
 nonLive = []
 records = []
 Total = ''
 Finished = False
-
+end = 5
+page = 1
+url = 'http://openleis.com/legal_entities/search/page/' + str(page)
+#======================================================>
 # .read() extracts all data from url provided
 # context=ctx to bypass SSL ERROR
+#=========WHERE TO PUT THIS SHIT==================================>
+# while page <= end:
+#         try:    
 html = urllib.request.urlopen(url,context=ctx).read()
 soup = BeautifulSoup(html, 'html.parser')
+paginationContainer = soup.find('div', {'class':'pagination'})
+pageTurner = 'http://openleis.com'
+pathFiller = '/legal_entities/search/page/'
+
+#================================================================>
+
+
+
 #====================ParentDiv parse============================>
 parentDiv = soup.find('section', {'class':'results row'})
 #===============================================================>
@@ -87,46 +62,52 @@ for line in totalContainer:
 
 
 #====================itemInfo parse==============================>
-liveItemCount = 0
 liveItems = ''
 not_liveItems = ''
+liveItemCount = 0
+notLiveItemCount = 0
+df = []
 contentContainer = parentDiv.find('ul', {'class':'results-list with-flags'})
 itemContainer = contentContainer('li')
 # print(itemContainer)
 liveItems = contentContainer.find_all('li', {'class':'live'})
 # print(liveItems)
 not_liveItems = contentContainer.find_all('li',{'class':'not_live'})
-#=============================Live======================================>
-for liveItem in liveItems:
-        item
+
+
+#=============================Item Iterate==============================>
+for item in itemContainer:
+# for liveItem in liveItems:
+        print('<=====================New Record=====================>')
+        statusContainer = item['class']
+        status = str(statusContainer[0])
+        print('1. ',status)
+        container = item.find('a' , attrs = {'class':'flag'})
+        country = container['href']
+        country = country[-2:]
+        print('2. ',country)
+        nameContainer = item.find('a' , attrs = {'class':'label'})
+        name = nameContainer.text
+        name = name.replace('"','')
+        name = name.strip()
+        print('3. ',name)
+        statusContainer = item.find('span', attrs = {'title':'Lei Registration Status'})
+        print('4. ',statusContainer.text)
+        entityStatusContainer = item.find('span', attrs = {'title':'Entity Status'})
+        entityStatus = entityStatusContainer.text
+        print('5. ',entityStatus)
+        noteContainer = item.find('span', attrs = {'class':'note'})
+        LEI = noteContainer.a.text
+        print('6. ',LEI)
+        liveItemCount = liveItemCount + 1
+        print('7. ',liveItemCount)
+        print('<===================Record Complete===================>')
+        print('')
+        print('')
 #=======================================================================>
-
-#============================Not_Live===================================>
-for not_liveItem in not_liveItems:
-        print(not_liveItem)
-#=======================================================================>
-
-# liveItems.append(itemContainer.find_all('li',{'class':'live'}))
-# not_liveItems.append(itemContainer.find_all('li',{'class':'not_live'}))
-# print(not_liveItems)
-# for item in itemContainer:
-#         liveItems.append()
-#         print('live: ',liveItems)
-#         not_liveItems.append()
-#         print('not_live: ',not_liveItems)
-
-        # if item.find('li', {'class'}) == 'live':
-        #         print('live:',item)
-        # elif item.find('li',{'class'}) == 'not_live':
-        #         print('not_live: ',item)
-        # else:
-        #         break
-        #Filter live/non_live first
-        # itemCount = itemCount + 1
-        # print(item)
-#===============================================================>
-
-
+#
+#
+#
 # for child in parentDiv.descendants:
 #     print(child)
 
