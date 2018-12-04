@@ -2,6 +2,12 @@ import pandas as pd
 from bs4 import BeautifulSoup
 import urllib.request, urllib.parse, urllib.error
 import substring
+#===================SQLite3====================================>
+import sqlite3
+connection = sqlite3.connect('LEIscrape.db')
+cursor = connection.cursor()
+cursor.execute('''CREATE TABLE IF NOT EXISTS Lei    (id TEXT UNIQUE, EntityStatus TEXT,            Country TEXT, LeiIdentifier TEXT, Name TEXT,     RegistrationStatus TEXT, RecordCount INTEGER)''')
+
 #check out 
 #===================SSL certificate errors=====================>
 import ssl
@@ -28,19 +34,19 @@ nonLive = []
 records = []
 Total = ''
 Finished = False
-end = 44000
+End = 0
 page = 1
 itemCount = 0
-# liveItems = ''
-# not_liveItems = ''
-# liveItemCount = 0
-# notLiveItemCount = 0
-df = pd.DataFrame(columns=['EntityStatus','Country', 'LEI' ,'Name', 'RegistrationStatus', 'RecordCount'])
+# dataFrame definition
+df = pd.DataFrame(columns=['id', 'EntityStatus','Country', 'LEI' ,'Name' , 'RegistrationStatus', 'RecordCount'])
 #======================================================>
-while page <= end:
+
+
+while Finished == False:
     try:
         url = 'http://openleis.com/legal_entities/search/page/' + str(page)
 # .read() extracts all data from url provided
+
 #=========WHERE TO PUT THIS SHIT==================================>
 # context is equal to ctx. Is used to bypass SSL ERROR
         html = urllib.request.urlopen(url,context=ctx).read()
@@ -51,9 +57,31 @@ while page <= end:
 
 #================================================================>
 
+
+
 #==================== ParentDiv parse ============================>
         parentDiv = soup.find('section', {'class':'results row'})
+        # print(parentDiv)
 #===============================================================>
+
+
+
+#====================itemInfo parse==============================>
+#soup row containing all content to scrape
+        contentContainer = parentDiv.find('ul', {'class':'results-list with-flags'})
+        # print(contentContainer)
+        itemContainer = contentContainer('li')
+
+#====================store total pages to scrape==================>
+        try:
+            endChild = parentDiv.find('a', {'class':'next_page'})
+            EndNode = endChild.find_previous_sibling()
+            End = int(EndNode.text)
+            # print(End)
+        except:
+            print('Total end value GET failed.  Check HTML for cause.')
+            
+#=================================================================>
 
 
 #====================TotalValue parse============================>
@@ -64,24 +92,6 @@ while page <= end:
         #         Total=line.get_text()
         #         print(Total)
 #===============================================================>
-
-
-#====================itemInfo parse==============================>
-        #soup row containing all content to scrape
-
-        contentContainer = parentDiv.find('ul', {'class':'results-list with-flags'})
-        itemContainer = contentContainer('li')
-
-        #soup div find to produce number of pages to iterate
-
-        endChild = parentDiv.find('a', {'class':'next_page'})
-        EndNode = endChild.find_previous_sibling()
-        End = int(EndNode.text)
-        print('end of scrape value: ',End)
-
-        # <a href="/legal_entities/search/page/43997/page/1">43997</a>
-        # <a class="next_page" rel="next" href="/legal_entities/search/page/2/page/1">Next →</a>
-
 
 #============================= Scrape Iterate Item ==============================>
         for item in itemContainer:
@@ -100,27 +110,44 @@ while page <= end:
                 # print('3. ',name)
                 statusContainer = item.find('span', attrs = {'title':'Lei Registration Status'})
                 registrationStatus = str(statusContainer.text)
-                print('4. ',registrationStatus)
+                # print('4. ',registrationStatus)
                 entityStatusContainer = item.find('span', attrs = {'title':'Entity Status'})
                 entityStatus = entityStatusContainer.text
                 # print('5. ',entityStatus)
                 noteContainer = item.find('span', attrs = {'class':'note'})
-                LEI = noteContainer.a.text
-                # print('6. ',LEI)
+                LeiIdentifier = noteContainer.a.text
+                # print('6. ',LeiIdentifier)
                 itemCount = itemCount + 1
                 # print('7. ',liveItemCount)
                 # print('<===================Record Complete===================>')
                 # print('')
                 # print('')
-                df = df.append({'EntityStatus':entityStatus,'Country':country, 'LEI':LEI ,'Name':name, 'RegistrationStatus':registrationStatus, 'RecordCount':itemCount},ignore_index=True)
+                df = df.append({'id':LeiIdentifier,'EntityStatus':entityStatus,'Country':country, 'LEI':LeiIdentifier ,'Name':name, 'RegistrationStatus':registrationStatus, 'RecordCount':itemCount},ignore_index=True)
+                cursor.execute('''INSERT OR REPLACE INTO Lei(id, EntityStatus, Country, LeiIdentifier, Name, RegistrationStatus, RecordCount) 
+                VALUES (?, ?, ?, ?, ?, ?, ?)''', (LeiIdentifier, entityStatus, country, LeiIdentifier, name, registrationStatus, itemCount))
+        connection.commit()
+        print('last page scrape completed: ', page)
         page = page + 1
-        print(df)
-        print('page: ', page)
-        if page == End:
-            print('Data.gov scrape complete')
+
+
+
+        # print(df)
+        if page > End:
+            print('Data.gov scrape complete.')
+            Finished = True
             exit()
-    except:
-        print("fail or complete check count to verify complete.  should be good.")
+
+    except KeyboardInterrupt:
+        print('')
+        print('Program interrupted by user...')
+        Finished = True
+        break
+
+    except Exception as ex:
+        print("An error was encountered in code please see below for error.")
+        # print error
+        print(ex)
+        cursor.close()
         exit()
 #======================= Scrape Iterate Item End ===============================>
 #
