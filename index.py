@@ -4,8 +4,9 @@ import urllib.request, urllib.parse, urllib.error
 import substring
 #===================SQLite3====================================>
 import sqlite3
-connection = sqlite3.connect('LEIscrape.db')
+connection = sqlite3.connect('LEIscrape.db.sqlite')
 cursor = connection.cursor()
+cursor.execute('DROP TABLE IF EXISTS lei')
 cursor.execute('''CREATE TABLE IF NOT EXISTS Lei    (id TEXT UNIQUE, EntityStatus TEXT,            Country TEXT, LeiIdentifier TEXT, Name TEXT,     RegistrationStatus TEXT, RecordCount INTEGER)''')
 
 #check out 
@@ -37,6 +38,7 @@ Finished = False
 End = 0
 page = 1
 itemCount = 0
+LEIlist = []
 # dataFrame definition
 df = pd.DataFrame(columns=['id', 'EntityStatus','Country', 'LEI' ,'Name' , 'RegistrationStatus', 'RecordCount'])
 #======================================================>
@@ -85,7 +87,7 @@ while Finished == False:
 
 
 #====================TotalValue parse============================>
-        #SHIT DONT WORK
+        #TOTAL LEI GET NOT WORKING.  need scrub output.
         # totalContainer = parentDiv.find_all('h1')
         # for line in totalContainer:
         #         # print(type(line))
