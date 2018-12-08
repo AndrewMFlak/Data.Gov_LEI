@@ -1,13 +1,12 @@
 import React from 'react'
 import Footer from '../components/Footer'
 import Header from '../components/Header'
+import VisibleLEIList from '../containers/VisibleLEIList'
 
 const App = () => (
   <div>
     <Header/>
-    <br/>
-    <p>"Insert some shit here"</p>
-    <br/>
+    <VisibleLEIList/>
     <Footer/>
   </div>
 )

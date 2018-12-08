@@ -1,8 +1,9 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import './index.css';
+import React from 'react'
+import ReactDOM from 'react-dom'
+import './index.css'
 // import App from './Pages/App';
 // import * as serviceWorker from './serviceWorker';
+import { createStore, applyMiddleware } from 'redux'
 import thunk from 'redux-thunk'
 import Root from './Root'
 import leiList from './reducers'
