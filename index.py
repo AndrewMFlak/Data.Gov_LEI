@@ -10,7 +10,7 @@ import sqlite3
 connection = sqlite3.connect('TEST.db.sqlite')
 cursor = connection.cursor()
 cursor.execute('DROP TABLE IF EXISTS lei')
-cursor.execute('''CREATE TABLE IF NOT EXISTS Lei(id TEXT UNIQUE, EntityStatus TEXT, Country TEXT, InferredJurisdiction TEXT, RegisteredAddress TEXT, HeadquarteredAddress TEXT, LeiIdentifier TEXT, Name TEXT, RegistrationStatus TEXT, LegalForm TEXT, BusinessRegistryName TEXT, BusinessRegistryAlert TEXT, RegisteredBy TEXT, AssignmentDate TEXT, RecordLastUpdate TEXT, NextRenewalDate TEXT, RecordCount INTEGER, LoadTime TEXT)''')
+cursor.execute('''CREATE TABLE IF NOT EXISTS Lei(id TEXT UNIQUE, EntityStatus TEXT, Country TEXT, InferredJurisdiction TEXT, RegisteredAddress TEXT, HeadquarteredAddress TEXT, LeiIdentifier TEXT, Name TEXT, RegistrationStatus TEXT, LegalForm TEXT, BusinessRegistryName TEXT, BusinessRegistryAlert TEXT, RegisteredBy TEXT, AssignmentDate TEXT, RecordLastUpdate TEXT, NextRenewalDate TEXT, ItemCount INTEGER, ItemTag TEXT, LoadTime TEXT)''')
 
 #check out 
 #===================SSL certificate errors=====================>
@@ -44,12 +44,15 @@ records = []
 Total = ''
 Finished = False
 End = 0
-page = 1
+page = 44078
 itemCount = 0
+itemTag = ''
 LEIlist = []
 # dataFrame definition
 #===========================iterate Variables====================================>
 item = ''
+# main = ''
+# iterateScrape = ''
 itemContainer = ''
 LeiIdentifier = ''
 entityStatus = ''
@@ -69,7 +72,7 @@ nextRenewalDate = ''
 itemCount = 0
 loadTime = ''
 #========================= Pandas Dataframe Defined ==============================>
-df = pd.DataFrame(columns=['id', 'EntityStatus','Country', 'InferredJurisdiction','RegisteredAddress', 'HeadquarteredAddress', 'LEI' ,'Name' , 'RegistrationStatus', 'LegalForm', 'BusinessRegistryName', 'BusinessRegistryAlert', 'RegisteredBy', 'AssignmentDate', 'RecordLastUpdate', 'NextRenewalDate', 'RecordCount','LoadTime'])
+df = pd.DataFrame(columns=['id', 'EntityStatus','Country', 'InferredJurisdiction','RegisteredAddress', 'HeadquarteredAddress', 'LEI' ,'Name' , 'RegistrationStatus', 'LegalForm', 'BusinessRegistryName', 'BusinessRegistryAlert', 'RegisteredBy', 'AssignmentDate', 'RecordLastUpdate', 'NextRenewalDate', 'ItemCount','ItemTag','LoadTime'])
 #======================================================>
 
 #==============================Get of End Value===================================>
@@ -90,14 +93,14 @@ def endGet(page, End):
 
         #====================== Scrape Functions ================================>
          
-def iterateScrape(item, itemCount):
+def iterateScrape(page, item, itemCount, itemTag, LeiIdentifier):
         try:
                 noteContainer = item.find('span', attrs = {'class':'note'})
                 LeiIdentifier = noteContainer.a.text
-                print('LEI_iterate. ',LeiIdentifier)
+                iterateScrape.LeiIdentifier = LeiIdentifier
 
         except:
-                LeiIdentifier = "error retrieving LEI value"
+                iterateScrape.LeiIdentifier = "error retrieving LEI value"
 
         # status
         try:
@@ -144,12 +147,14 @@ def iterateScrape(item, itemCount):
 
         except:
                 entityStatus = "error retrieving entity status value"
-
-                
                 
         # itemCount
         try:
                 itemCount = itemCount + 1
+                iterateScrape.itemCount = itemCount 
+                # print(itemCount , '. ' , LeiIdentifier)
+                itemTag = page,'_',itemCount
+                iterateScrape.itemTag = itemTag
         except:
                 itemCount = "error retrieving item count value"
         # print('<===================== Search Page Content Complete =====================>')
@@ -250,19 +255,23 @@ def iterateScrape(item, itemCount):
         except: 
                 assignmentDate = "error retrieving assignment date value"
 
-        return LeiIdentifier, entityStatus, country, inferredJurisdiction, registeredAddress, headquarterAddress, name, registrationStatus, legalForm, businessRegistryName, businessRegistryAlert, registeredBy, assignmentDate, recordLastUpdate, nextRenewalDate, itemCount, loadTime
+        return LeiIdentifier, entityStatus, country, inferredJurisdiction, registeredAddress, headquarterAddress, name, registrationStatus, legalForm, businessRegistryName, businessRegistryAlert, registeredBy, assignmentDate, recordLastUpdate, nextRenewalDate, itemCount, itemTag, loadTime
                 #=================== Detail Attribute Items Completed ==============================>
 
-def captureValues(LeiIdentifier, entityStatus, country, inferredJurisdiction, registeredAddress, headquarterAddress, name, registrationStatus, legalForm, businessRegistryName, businessRegistryAlert, registeredBy, assignmentDate, recordLastUpdate, nextRenewalDate, itemCount, loadTime):
-        LEIitems = df.append({'id':LeiIdentifier, 'EntityStatus':entityStatus, 'Country':country, 'InferredJurisdiction':inferredJurisdiction ,'RegisteredAddress':registeredAddress, 'HeadquarteredAddress':headquarterAddress ,'LEI':LeiIdentifier, 'Name':name ,'RegistrationStatus':registrationStatus, 'LegalForm':legalForm, 'BusinessRegistryName': businessRegistryName, 'BusinessRegistryAlert': businessRegistryAlert, 'RegisteredBy':registeredBy, 'AssignmentDate':assignmentDate , 'RecordLastUpdate': recordLastUpdate, 'NextRenewalDate': nextRenewalDate,'RecordCount':itemCount, 'LoadTime':loadTime},ignore_index=True)
+def captureValues(LeiIdentifier, entityStatus, country, inferredJurisdiction, registeredAddress, headquarterAddress, name, registrationStatus, legalForm, businessRegistryName, businessRegistryAlert, registeredBy, assignmentDate, recordLastUpdate, nextRenewalDate, itemCount, itemTag, loadTime):
+        LEIitems = df.append({'id':LeiIdentifier, 'EntityStatus':entityStatus, 'Country':country, 'InferredJurisdiction':inferredJurisdiction ,'RegisteredAddress':registeredAddress, 'HeadquarteredAddress':headquarterAddress ,'LEI':LeiIdentifier, 'Name':name ,'RegistrationStatus':registrationStatus, 'LegalForm':legalForm, 'BusinessRegistryName': businessRegistryName, 'BusinessRegistryAlert': businessRegistryAlert, 'RegisteredBy':registeredBy, 'AssignmentDate':assignmentDate , 'RecordLastUpdate': recordLastUpdate, 'NextRenewalDate': nextRenewalDate,
+        'ItemCount':itemCount,
+        'ItemTag':itemTag,
+         'LoadTime':loadTime},ignore_index=True)
         print(LEIitems)
-        cursor.execute('''INSERT OR REPLACE INTO Lei(id, EntityStatus, Country, InferredJurisdiction, RegisteredAddress, HeadquarteredAddress, LeiIdentifier, Name, RegistrationStatus, LegalForm, BusinessRegistryName, BusinessRegistryAlert, RegisteredBy, AssignmentDate, RecordLastUpdate, NextRenewalDate, RecordCount, LoadTime) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', (LeiIdentifier, entityStatus, country, inferredJurisdiction, registeredAddress, headquarterAddress, LeiIdentifier, name, registrationStatus, legalForm, businessRegistryName, businessRegistryAlert, registeredBy, assignmentDate, recordLastUpdate, nextRenewalDate, itemCount, loadTime))
+        cursor.execute('''INSERT OR REPLACE INTO Lei(id, EntityStatus, Country, InferredJurisdiction, RegisteredAddress, HeadquarteredAddress, LeiIdentifier, Name, RegistrationStatus, LegalForm, BusinessRegistryName, BusinessRegistryAlert, RegisteredBy, AssignmentDate, RecordLastUpdate, NextRenewalDate, ItemCount, ItemTag, LoadTime) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', (LeiIdentifier, entityStatus, country, inferredJurisdiction, registeredAddress, headquarterAddress, LeiIdentifier, name, registrationStatus, legalForm, businessRegistryName, businessRegistryAlert, registeredBy, assignmentDate, recordLastUpdate, nextRenewalDate, itemCount, itemTag, loadTime))
         connection.commit()
 
 
 #============================= Scrape Iterate Item ==============================>
-def main(page, End, itemContainer, item, itemCount, Finished):
+def main(page, End, itemContainer, item, itemTag,itemCount):
+
         url = 'http://openleis.com/legal_entities/search/page/' + str(page)
         html = urllib.request.urlopen(url,context=ctx).read()
         soup = BeautifulSoup(html, 'html.parser')
@@ -275,9 +284,12 @@ def main(page, End, itemContainer, item, itemCount, Finished):
                 End = int(EndNode.text)
                 print('Main End: ', End)
         except:
-                print('scrape value GET failed.  Check HTML for cause.')
+                print('scrape value GET failed.  Should populate on second to last page or is change in HTML.')
         for item in itemContainer:
-                iterateScrape(item, itemCount)
+                iterateScrape(page, item, itemCount, itemTag, LeiIdentifier)
+                itemCount = iterateScrape.itemCount
+                itemTag = iterateScrape.itemTag
+                print(iterateScrape.LeiIdentifier, ' ', itemTag)
         print('last page scrape completed: ', page)
         # page = page + 1
         # print('page: ',page)
@@ -288,12 +300,12 @@ def main(page, End, itemContainer, item, itemCount, Finished):
         #         exit()
 
                 # page update and flow through scraper
-        return page, End, itemContainer, item, itemCount, Finished
+        return page, End, itemContainer, item, itemTag, itemCount 
         
 while Finished == False:
         try:
                 endGet(page, End)
-                main(page, End, itemContainer, item, itemCount,Finished)
+                main(page, End, itemContainer, item, itemCount, Finished)
                 page = page + 1
                 # print('page: ',page)
                 # print('end: ',endGet.End)
@@ -302,19 +314,28 @@ while Finished == False:
                         Finished = True
                         exit()
 
-
         except KeyboardInterrupt:
                 print('')
                 print('Program interrupted by user...')
                 Finished = True
                 break
 
+        # except TimeoutError:
+
+        # except ConnectionResetError:
+        #         continue
+
+        # except Exception as ex:
+        #         print("An error was encountered in code please see below for error.")
+        #         print(ex)
+        #         cursor.close()
+        #         exit()
+
         except Exception as ex:
                 if Exception == '[Errno 54] Connection reset by peer':
-                        print("figure out how to restart from where stopped")
+                        continue
                 else:
                         print("An error was encountered in code please see below for error.")
-                        # print error
                         print(ex)
                         cursor.close()
                         exit()
