@@ -10,7 +10,7 @@ import sqlite3
 connection = sqlite3.connect('TEST.db.sqlite')
 cursor = connection.cursor()
 cursor.execute('DROP TABLE IF EXISTS lei')
-cursor.execute('''CREATE TABLE IF NOT EXISTS Lei(id TEXT UNIQUE, EntityStatus TEXT, Country TEXT, InferredJurisdiction TEXT, RegisteredAddress TEXT, HeadquarteredAddress TEXT, LeiIdentifier TEXT, Name TEXT, RegistrationStatus TEXT, LegalForm TEXT, BusinessRegistryName TEXT, BusinessRegistryAlert TEXT, RegisteredBy TEXT, AssignmentDate TEXT, RecordLastUpdate TEXT, NextRenewalDate TEXT, ItemCount INTEGER, ItemTag TEXT, LoadTime TEXT)''')
+cursor.execute('''CREATE TABLE IF NOT EXISTS Lei(id TEXT, EntityStatus TEXT, Country TEXT, InferredJurisdiction TEXT, RegisteredAddress TEXT, HeadquarteredAddress TEXT, LeiIdentifier TEXT, Name TEXT, RegistrationStatus TEXT, LegalForm TEXT, BusinessRegistryName TEXT, BusinessRegistryAlert TEXT, RegisteredBy TEXT, AssignmentDate TEXT, RecordLastUpdate TEXT, NextRenewalDate TEXT, ItemCount INTEGER, ItemTag TEXT , LoadTime TEXT)''')
 
 #check out 
 #===================SSL certificate errors=====================>
@@ -71,7 +71,7 @@ recordLastUpdate = ''
 nextRenewalDate = ''
 itemCount = 0
 loadTime = ''
-#========================= Pandas Dataframe Defined ==============================>
+#========================= Commit to Pandas Dataframe ==============================>
 df = pd.DataFrame(columns=['id', 'EntityStatus','Country', 'InferredJurisdiction','RegisteredAddress', 'HeadquarteredAddress', 'LEI' ,'Name' , 'RegistrationStatus', 'LegalForm', 'BusinessRegistryName', 'BusinessRegistryAlert', 'RegisteredBy', 'AssignmentDate', 'RecordLastUpdate', 'NextRenewalDate', 'ItemCount','ItemTag','LoadTime'])
 #======================================================>
 
@@ -101,62 +101,71 @@ def iterateScrape(page, item, itemCount, itemTag, LeiIdentifier):
 
         except:
                 iterateScrape.LeiIdentifier = "error retrieving LEI value"
+                iterateScrape.LeiIdentifier = LeiIdentifier
 
         # status
         try:
                 statusContainer = item['class']
                 status = str(statusContainer[0])
-                # print('1. ',status)
+                iterateScrape.status = status
         except:
                 status = "error retrieving status value"
-
+                iterateScrape.status = status
         # country       
         try:
 
                 container = item.find('a' , attrs = {'class':'flag'})
                 country = container['href']
                 country = country[-2:]
-                # print('2. ',country)
+                iterateScrape.country = country
         except:
                 country = "error retrieving country value"
-
+                iterateScrape.country = country
         # name
         try:
                 nameContainer = item.find('a' , attrs = {'class':'label'})
                 name = nameContainer.text
                 name = name.replace('"','')
                 name = name.strip()
+                iterateScrape.name = name
+
         except:
                 name = "error retrieving name value"
-                # print('3. ',name)
-
+                iterateScrape.name = name
         # registrationStatus
         try:
                 statusContainer = item.find('span', attrs = {'title':'Lei Registration Status'})
                 registrationStatus = str(statusContainer.text)
-                # print('4. ',registrationStatus)
+                iterateScrape.registrationStatus = registrationStatus
 
         except:
                 registrationStatus = "error retrieving status value"
+                iterateScrape.registrationStatus = registrationStatus
 
         # entityStatus
         try:
                 entityStatusContainer = item.find('span', attrs = {'title':'Entity Status'})
                 entityStatus = entityStatusContainer.text
-                # print('5. ',entityStatus)
-
+                iterateScrape.entityStatus = entityStatus
         except:
                 entityStatus = "error retrieving entity status value"
+                iterateScrape.entityStatus = entityStatus
                 
         # itemCount
         try:
                 itemCount = itemCount + 1
                 iterateScrape.itemCount = itemCount 
-                # print(itemCount , '. ' , LeiIdentifier)
-                itemTag = page,'_',itemCount
-                iterateScrape.itemTag = itemTag
         except:
                 itemCount = "error retrieving item count value"
+                iterateScrape.itemCount = itemCount
+
+        # itemTag
+        try:
+                itemTag = str(page) + ' ' + str(itemCount)
+                iterateScrape.itemTag = itemTag
+        except:
+                itemTag = "error retrieving item tag value"
+                iterateScrape.itemTag = itemTag
         # print('<===================== Search Page Content Complete =====================>')
         # print('')
         # print('')
@@ -173,70 +182,85 @@ def iterateScrape(page, item, itemCount, itemTag, LeiIdentifier):
                 LEI_legal_form = LEI_Div.find('dd', {'class':'legal_form'})
                 # print('legal-form: ', LEI_legal_form.text)
                 legalForm = LEI_legal_form.text
+                iterateScrape.legalForm = legalForm
         except: 
                 legalForm = "error retrieving legal form value"
+                iterateScrape.legalForm = legalForm
 
         # registeredAddress
         try:
                 LEI_registered_address = LEI_Div.find('dd', {'class':'registered_address'})
                 registeredAddress = LEI_registered_address.text
-                # print('registered-address: ', registeredAddress)
+                iterateScrape.registeredAddress = registeredAddress
         except:
                 registeredAddress = "error retrieving registered address value"
+                iterateScrape.registeredAddress = registeredAddress
 
         # headquarterAddress
         try:
                 LEI_headquartered_address = LEI_Div.find('dd', {'class':'headquarter_address'})
                 headquarterAddress = LEI_headquartered_address.text
-                # print('headquarterd-address: ', headquarterAddress)
+                iterateScrape.headquarterAddress = headquarterAddress
         except:
                 headquarterAddress = "error retrieving headquarter address value"
+                iterateScrape.headquarterAddress = headquarterAddress
 
         # inferredJurisdiction
         try:
                 LEI_inferredJurisdiction = LEI_Div.find('dd', {'class':'inferred_jurisdiction'})
                 inferredJurisdiction = LEI_inferredJurisdiction.text
-                # print('inferredJurisdiction: ', inferredJurisdiction)
+                iterateScrape.inferredJurisdiction = inferredJurisdiction
         except:
                 inferredJurisdiction = "error retrieving inferred jurisdiction value"
+                iterateScrape.inferredJurisdiction = inferredJurisdiction
+
 
         # businessRegistryName
         try:
                 LEI_businessRegistryName = LEI_Div.find('dd', {'class':'business_registry_name'})
                 businessRegistryName = LEI_businessRegistryName.text
-                # print('businessRegistryName: ',businessRegistryName)
+                iterateScrape.businessRegistryName = businessRegistryName
         except: 
                 businessRegistryName = "error retrieving business registry name value"
+                iterateScrape.businessRegistryName = businessRegistryName
 
         #businessRegistryAlert
         try:
                 LEI_businessRegistryAlert = LEI_Div.find('dd', {'class':'business_registry_identifier alert'})
                 businessRegistryAlert = LEI_businessRegistryAlert.text
-                # print('businessRegistryAlert: ', businessRegistryAlert)
+                iterateScrape.businessRegistryAlert = businessRegistryAlert
         except:
                 businessRegistryAlert = "error retrieving business registry alert value"
+                iterateScrape.businessRegistryAlert = businessRegistryAlert
 
         #recordLastUpdate
         try:
                 LEI_recordLastUpdate = LEI_Div.find('dd', {'class':'record_last_update'})
                 recordLastUpdate = LEI_recordLastUpdate.text
+                iterateScrape.recordLastUpdate = recordLastUpdate
         except:
                 recordLastUpdate = "error retrieving record last update value"
+                iterateScrape.recordLastUpdate = recordLastUpdate
 
         # nextRenewalDate
         try:
                 LEI_nextRenewalDate = LEI_Div.find('dd', {'class':'next_renewal_date'})
                 nextRenewalDate = LEI_nextRenewalDate.text
+                iterateScrape.nextRenewalDate = nextRenewalDate
         except:
                 nextRenewalDate = "error retrieving next renewal date value"
+                iterateScrape.nextRenewalDate = nextRenewalDate
 
         # LoadTime
         try:
                 ts = time.time()
                 st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S.%f')[:-1]
                 loadTime = (str(st) +' EST')
+                iterateScrape.loadTime = loadTime
+
         except:
                 loadTime = "error retrieving load time values"
+                iterateScrape.loadTime = loadTime
         #=================== Attribute Div Items Completed =============================>
 
         #=================== Detail Attribute Div Items ========================================>
@@ -246,26 +270,28 @@ def iterateScrape(page, item, itemCount, itemTag, LeiIdentifier):
         try:
                 LEI_registeredBy = LEI_Div.find('dd', {'class':'registered_by'})
                 registeredBy = LEI_registeredBy.text
+                iterateScrape.registeredBy = registeredBy
         except:
                 registeredBy = "error retrieving registered by value"
+                iterateScrape.registeredBy = registeredBy
         # print('RegisteredBy: ', registeredBy)
         try:
                 LEI_assignmentDate = LEI_Div.find('dd', {'class':'assignment_date'})
                 assignmentDate = LEI_assignmentDate.text
+                iterateScrape.assignmentDate = assignmentDate
         except: 
                 assignmentDate = "error retrieving assignment date value"
-
+                iterateScrape.assignmentDate = assignmentDate
         return LeiIdentifier, entityStatus, country, inferredJurisdiction, registeredAddress, headquarterAddress, name, registrationStatus, legalForm, businessRegistryName, businessRegistryAlert, registeredBy, assignmentDate, recordLastUpdate, nextRenewalDate, itemCount, itemTag, loadTime
                 #=================== Detail Attribute Items Completed ==============================>
 
 def captureValues(LeiIdentifier, entityStatus, country, inferredJurisdiction, registeredAddress, headquarterAddress, name, registrationStatus, legalForm, businessRegistryName, businessRegistryAlert, registeredBy, assignmentDate, recordLastUpdate, nextRenewalDate, itemCount, itemTag, loadTime):
-        LEIitems = df.append({'id':LeiIdentifier, 'EntityStatus':entityStatus, 'Country':country, 'InferredJurisdiction':inferredJurisdiction ,'RegisteredAddress':registeredAddress, 'HeadquarteredAddress':headquarterAddress ,'LEI':LeiIdentifier, 'Name':name ,'RegistrationStatus':registrationStatus, 'LegalForm':legalForm, 'BusinessRegistryName': businessRegistryName, 'BusinessRegistryAlert': businessRegistryAlert, 'RegisteredBy':registeredBy, 'AssignmentDate':assignmentDate , 'RecordLastUpdate': recordLastUpdate, 'NextRenewalDate': nextRenewalDate,
+        df.append({'id':iterateScrape.LeiIdentifier, 'EntityStatus':iterateScrape.entityStatus, 'Country':iterateScrape.country, 'InferredJurisdiction':iterateScrape.inferredJurisdiction ,'RegisteredAddress':iterateScrape.registeredAddress, 'HeadquarteredAddress':iterateScrape.headquarterAddress ,'LEI':iterateScrape.LeiIdentifier, 'Name':iterateScrape.name ,'RegistrationStatus':iterateScrape.registrationStatus, 'LegalForm':iterateScrape.legalForm, 'BusinessRegistryName': iterateScrape.businessRegistryName, 'BusinessRegistryAlert': iterateScrape.businessRegistryAlert, 'RegisteredBy':iterateScrape.registeredBy, 'AssignmentDate':iterateScrape.assignmentDate , 'RecordLastUpdate': iterateScrape.recordLastUpdate, 'NextRenewalDate': iterateScrape.nextRenewalDate,
         'ItemCount':itemCount,
         'ItemTag':itemTag,
-         'LoadTime':loadTime},ignore_index=True)
-        print(LEIitems)
+         'LoadTime':iterateScrape.loadTime},ignore_index=True)
         cursor.execute('''INSERT OR REPLACE INTO Lei(id, EntityStatus, Country, InferredJurisdiction, RegisteredAddress, HeadquarteredAddress, LeiIdentifier, Name, RegistrationStatus, LegalForm, BusinessRegistryName, BusinessRegistryAlert, RegisteredBy, AssignmentDate, RecordLastUpdate, NextRenewalDate, ItemCount, ItemTag, LoadTime) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', (LeiIdentifier, entityStatus, country, inferredJurisdiction, registeredAddress, headquarterAddress, LeiIdentifier, name, registrationStatus, legalForm, businessRegistryName, businessRegistryAlert, registeredBy, assignmentDate, recordLastUpdate, nextRenewalDate, itemCount, itemTag, loadTime))
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', (iterateScrape.LeiIdentifier, iterateScrape.entityStatus, iterateScrape.country, iterateScrape.inferredJurisdiction, iterateScrape.registeredAddress, iterateScrape.headquarterAddress, iterateScrape.LeiIdentifier, iterateScrape.name, iterateScrape.registrationStatus, iterateScrape.legalForm, iterateScrape.businessRegistryName, iterateScrape.businessRegistryAlert, iterateScrape.registeredBy, iterateScrape.assignmentDate, iterateScrape.recordLastUpdate, iterateScrape.nextRenewalDate, itemCount, itemTag, iterateScrape.loadTime))
         connection.commit()
 
 
@@ -284,12 +310,13 @@ def main(page, End, itemContainer, item, itemTag,itemCount):
                 End = int(EndNode.text)
                 print('Main End: ', End)
         except:
-                print('scrape value GET failed.  Should populate on second to last page or is change in HTML.')
+                print('scrape value GET failed.  This message should populate on second to last page or is change in HTML.')
         for item in itemContainer:
                 iterateScrape(page, item, itemCount, itemTag, LeiIdentifier)
                 itemCount = iterateScrape.itemCount
                 itemTag = iterateScrape.itemTag
                 print(iterateScrape.LeiIdentifier, ' ', itemTag)
+        captureValues(LeiIdentifier, entityStatus, country, inferredJurisdiction, registeredAddress, headquarterAddress, name, registrationStatus, legalForm, businessRegistryName, businessRegistryAlert, registeredBy, assignmentDate, recordLastUpdate, nextRenewalDate, itemCount, itemTag, loadTime)
         print('last page scrape completed: ', page)
         # page = page + 1
         # print('page: ',page)
