@@ -4,13 +4,20 @@ import datetime
 from bs4 import BeautifulSoup
 import urllib.request, urllib.parse, urllib.error
 # import substring
+#===================MongoDB====================================>
+import pymongo
+
+from scrapy.conf import settings
+from scrapy.exceptions import DropItem
+from scrapy.exceptions import log
+
 #===================SQLite3====================================>
-import sqlite3
-# connection = sqlite3.connect('LEIscrape.db.sqlite')
-connection = sqlite3.connect('TEST.db.sqlite')
-cursor = connection.cursor()
-cursor.execute('DROP TABLE IF EXISTS lei')
-cursor.execute('''CREATE TABLE IF NOT EXISTS Lei(id TEXT, EntityStatus TEXT, Country TEXT, InferredJurisdiction TEXT, RegisteredAddress TEXT, HeadquarteredAddress TEXT, LeiIdentifier TEXT, Name TEXT, RegistrationStatus TEXT, LegalForm TEXT, BusinessRegistryName TEXT, BusinessRegistryAlert TEXT, RegisteredBy TEXT, AssignmentDate TEXT, RecordLastUpdate TEXT, NextRenewalDate TEXT, ItemCount INTEGER, ItemTag TEXT , LoadTime TEXT)''')
+# import sqlite3
+# # connection = sqlite3.connect('LEIscrape.db.sqlite')
+# connection = sqlite3.connect('TEST.db.sqlite')
+# cursor = connection.cursor()
+# cursor.execute('DROP TABLE IF EXISTS LEI')
+# cursor.execute('''CREATE TABLE IF NOT EXISTS LEI(id TEXT, EntityStatus TEXT, Country TEXT, InferredJurisdiction TEXT, RegisteredAddress TEXT, HeadquarteredAddress TEXT, LeiIdentifier TEXT, Name TEXT, RegistrationStatus TEXT, LegalForm TEXT, BusinessRegistryName TEXT, BusinessRegistryAlert TEXT, RegisteredBy TEXT, AssignmentDate TEXT, RecordLastUpdate TEXT, NextRenewalDate TEXT, ItemCount INTEGER, ItemTag TEXT , LoadTime TEXT)''')
 
 #check out 
 #===================SSL certificate errors=====================>
@@ -79,7 +86,7 @@ itemContainer = ''
 df = pd.DataFrame(columns=['id', 'EntityStatus','Country', 'InferredJurisdiction','RegisteredAddress', 'HeadquarteredAddress', 'LEI' ,'Name' , 'RegistrationStatus', 'LegalForm', 'BusinessRegistryName', 'BusinessRegistryAlert', 'RegisteredBy', 'AssignmentDate', 'RecordLastUpdate', 'NextRenewalDate', 'ItemCount','ItemTag','LoadTime'])
 #======================================================>
 
-#==============================Get of End Value===================================>
+#==============================Get request of End Value===================================>
 url = 'http://openleis.com/legal_entities/search/page/' + str(page)
 html = urllib.request.urlopen(url,context=ctx).read()
 soup = BeautifulSoup(html, 'html.parser')
@@ -183,6 +190,8 @@ while Finished == False:
                         except:
                                 itemTagValue = "error retrieving item tag value"
                                 itemTag.append(itemTagValue)
+                   
+                
                         # print('<===================== Search Page Content Complete =====================>')
                         # print('')
                         # ====================================== LEI Legal Entity details ===================================>
@@ -231,7 +240,7 @@ while Finished == False:
                                 inferredJurisdiction.append(inferredJurisdictionValue)
 
                         except:
-                                inferredJurisdictionValue = "None provided"
+                                inferredJurisdictionValue = "United States"
                                 inferredJurisdiction.append(inferredJurisdictionValue)
 
                         # businessRegistryName
@@ -304,20 +313,48 @@ while Finished == False:
                                 assignmentDateValue = "error retrieving assignment date value"
                                 assignmentDate.append(assignmentDateValue)
 
+                #connecting to Mongodb using python
+                myclient = pymongo.MongoClient("mongodb://localhost:27017/")
+                mydb = myclient["mydatabase"]
+                mycol = mydb["id"]
+
+
+                # class MongoDBPipeline(object):
+
+                #         def __init__(self):
+                #                 connection = pymongo.MongoClient(
+                #                         settings['MONGODB_SERVER'],
+                #                         settings['MONGODB_PORT']
+                #                 )   
+                #                 db = connection[settings['MONGODB_DB']]
+                #                 self.collection = db[settings['MONGODB_COLLECTION']]
+                #         def process_item(self, item, spider):
+                #                 valid = True
+                #                 for data in item:
+                #                         if not data:
+                #                                 valid = False
+                #                                 raise DropItem("Missing {0}!".format(data))
+                #                 if valid:
+                #                         self.collection.insert(dict(item))
+                #                         log.msg("Question added to MongoDB database!",
+                #                                 level=log.DEBUG, spider=spider)
+                #                 return item
+
+        
+                #==============================PandasDataframe===========================================>
                 # df.append({'id':LeiIdentifier, 'EntityStatus':entityStatus, 'Country':countryList, 'InferredJurisdiction':inferredJurisdiction ,'RegisteredAddress':registeredAddress, 'HeadquarteredAddress':headquarterAddress ,'LEI':LeiIdentifier, 'Name':nameList ,'RegistrationStatus':registrationStatus, 'LegalForm':legalForm, 'BusinessRegistryName': businessRegistryName, 'BusinessRegistryAlert': businessRegistryAlert, 'RegisteredBy':registeredBy, 'AssignmentDate':assignmentDate , 'RecordLastUpdate': recordLastUpdate, 'NextRenewalDate': nextRenewalDate,
                 # 'ItemCount':itemCount,
                 # 'ItemTag':itemTag,
                 # 'LoadTime':loadTime},ignore_index=True)
                 # print(df.info())
 
+                #=============================SQLlite attempt=======================================>
                 #looping through to unpack lists of collected LEI data.
-                for i in range(len(LeiIdentifier)):
-                        cursor.execute('''INSERT INTO Lei(id, EntityStatus, Country, InferredJurisdiction, RegisteredAddress, HeadquarteredAddress, LeiIdentifier, Name, RegistrationStatus, LegalForm, BusinessRegistryName, BusinessRegistryAlert, RegisteredBy, AssignmentDate, RecordLastUpdate, NextRenewalDate, ItemCount, ItemTag, LoadTime) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', 
-                        (LeiIdentifier[i], entityStatus[i], countryList[i], inferredJurisdiction[i], registeredAddress[i], headquarterAddress[i], LeiIdentifier[i], nameList[i], registrationStatus[i], legalForm[i], businessRegistryName[i], businessRegistryAlert[i], registeredBy[i], assignmentDate[i], recordLastUpdate[i], nextRenewalDate[i], itemCountList[i], itemTag[i], loadTime[i],))
-                connection.commit()
-                # cursor.executemany('''INSERT INTO Lei(id, EntityStatus, Country, InferredJurisdiction, RegisteredAddress, HeadquarteredAddress, LeiIdentifier, Name, RegistrationStatus, LegalForm, BusinessRegistryName, BusinessRegistryAlert, RegisteredBy, AssignmentDate, RecordLastUpdate, NextRenewalDate, ItemCount, ItemTag, LoadTime) 
-                # VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', (LeiIdentifier, entityStatus, countryList, inferredJurisdiction, registeredAddress, headquarterAddress, LeiIdentifier, nameList, registrationStatus, legalForm, businessRegistryName, businessRegistryAlert, registeredBy, assignmentDate, recordLastUpdate, nextRenewalDate, itemCountList, itemTag, loadTime,))
+                # for i in range(len(LeiIdentifier)):
+                #         cursor.execute('''INSERT INTO Lei(id, EntityStatus, Country, InferredJurisdiction, RegisteredAddress, HeadquarteredAddress, LeiIdentifier, Name, RegistrationStatus, LegalForm, BusinessRegistryName, BusinessRegistryAlert, RegisteredBy, AssignmentDate, RecordLastUpdate, NextRenewalDate, ItemCount, ItemTag, LoadTime) 
+                #         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', 
+                #         (LeiIdentifier[i], entityStatus[i], countryList[i], inferredJurisdiction[i], registeredAddress[i], headquarterAddress[i], LeiIdentifier[i], nameList[i], registrationStatus[i], legalForm[i], businessRegistryName[i], businessRegistryAlert[i], registeredBy[i], assignmentDate[i], recordLastUpdate[i], nextRenewalDate[i], itemCountList[i], itemTag[i], loadTime[i],))
+                # connection.commit()
 
                 #====================================================================>
                 print('last page scrape completed: ', page)

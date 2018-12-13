@@ -1,5 +1,5 @@
 import { connect } from 'react-redux'
-import { toggleLEI } from '../actions'
+import { toggleLEI, saveSelectedLEI } from '../actions'
 import LEIList from 'components/LEIList'
 
 const getVisibleLEIs = (LEIs, filter) => {
@@ -16,7 +16,7 @@ const getVisibleLEIs = (LEIs, filter) => {
 }
 
 const mapStateToProps = (state) => ({
-    LEIs: getVisibleMovies(state.LEIs,
+    LEIs: getVisibleLEIs(state.LEIs,
         state.visibleFilter),
         isLoading: state.details.isLoading,
         LEIDetails: state.details.data
@@ -31,6 +31,7 @@ const mapDispatchToProps = (dispatch) => ({
     }
 })
  const VisibleLEIList = connect(
-     mapStateToProps, mapDispatchToProps)(LEIList)
+     mapStateToProps, 
+     mapDispatchToProps)(LEIList)
 
 export default VisibleLEIList

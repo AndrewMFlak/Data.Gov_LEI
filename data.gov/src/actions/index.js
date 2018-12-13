@@ -1,7 +1,7 @@
 import axios from "axios"
 // import sqlite3 from "sqlite3"
 
-// let nextLeiId = 0
+let nextLeiId = 0
 
 // const BASEURL = "";
 // const APIKEY = "";
@@ -42,8 +42,19 @@ export const receiveData = (key, data) => ({
     data
 })
 
-// export const addLEI = (text) => ({
-//     type: 'Add'
-//     id:
-//     text
-// })
+export const saveSelectedLEI = (LEIName) => ({
+    type: "SAVE_LEI",
+    LEIName
+})
+
+export function fetchLEI(LEIName) {
+    return function(dispatch) {
+        dispatch(requestData("REQUEST_Data"))
+        return axios.get(BASEURL + LEIName + APIKey).then(
+            function(data) {
+                console.log(data)
+                setTimeout(function() {dispatch(receiveData(LEIName, data.data))}, 2500)
+            }
+        )
+    }
+}
