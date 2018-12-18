@@ -7,9 +7,19 @@ import urllib.request, urllib.parse, urllib.error
 #===================MongoDB====================================>
 import pymongo
 
-from scrapy.conf import settings
-from scrapy.exceptions import DropItem
-from scrapy.exceptions import log
+try:
+    myclient = pymongo.MongoClient("mongodb://localhost:27017/")
+
+except pymongo.errors.ConnectionFailure as e:
+    print(e)
+
+# collection defined
+mydb = myclient["openleis"]
+# mydb.drop_collection("LEIs")
+mycol = mydb["LEIs"]
+mycol.create_index("_id")
+# mycol.create_index("id")
+
 
 #===================SQLite3====================================>
 # import sqlite3
@@ -76,6 +86,8 @@ nextRenewalDate = []
 itemCountList = []
 itemTag = []
 loadTime = []
+loopDictionary = {}
+loopCollection = []
 # dataFrame definition
 #===========================iterate Variables====================================>
 item = ''
@@ -83,7 +95,7 @@ item = ''
 itemContainer = ''
 
 #========================= Commit to Pandas Dataframe ==============================>
-df = pd.DataFrame(columns=['id', 'EntityStatus','Country', 'InferredJurisdiction','RegisteredAddress', 'HeadquarteredAddress', 'LEI' ,'Name' , 'RegistrationStatus', 'LegalForm', 'BusinessRegistryName', 'BusinessRegistryAlert', 'RegisteredBy', 'AssignmentDate', 'RecordLastUpdate', 'NextRenewalDate', 'ItemCount','ItemTag','LoadTime'])
+# df = pd.DataFrame(columns=['id', 'EntityStatus','Country', 'InferredJurisdiction','RegisteredAddress', 'HeadquarteredAddress', 'LEI' ,'Name' , 'RegistrationStatus', 'LegalForm', 'BusinessRegistryName', 'BusinessRegistryAlert', 'RegisteredBy', 'AssignmentDate', 'RecordLastUpdate', 'NextRenewalDate', 'ItemCount','ItemTag','LoadTime'])
 #======================================================>
 
 #==============================Get request of End Value===================================>
@@ -110,6 +122,18 @@ while Finished == False:
                 parentDiv = soup.find('section', {'class':'results row'})
                 contentContainer = parentDiv.find('ul', {'class':'results-list with-flags'})
                 itemContainer = contentContainer.find_all('li')
+                try:
+                        myclient = pymongo.MongoClient("mongodb://localhost:27017/")
+
+                except pymongo.errors.ConnectionFailure as e:
+                        print(e)
+
+                # collection defined
+                mydb = myclient["openleis"]
+                mycol = mydb["LEIs"]
+                # mycol.create_index("_id")
+
+
                 # print(itemContainer)
                 for item in itemContainer:
                         try:
@@ -177,19 +201,19 @@ while Finished == False:
                         try:
                                 itemCount = itemCount + 1
                                 itemCountList.append(itemCount)
-                                print(itemCount)
+                                print(LeiIdentifierValue, str(itemCount))
                         except:
                                 itemCount = "error retrieving item count value"
                                 itemCountList.append(itemCount)
 
                         # itemTag
-                        try: 
-                                itemTagValue = 'page. ' + str(page) + " - " + str(itemCount)
-                                itemTag.append(itemTagValue)
+                        # try: 
+                        #         itemTagValue = 'page. ' + str(page) + " - " + str(itemCount)
+                        #         itemTag.append(itemTagValue)
 
-                        except:
-                                itemTagValue = "error retrieving item tag value"
-                                itemTag.append(itemTagValue)
+                        # except:
+                        #         itemTagValue = "error retrieving item tag value"
+                        #         itemTag.append(itemTagValue)
                    
                 
                         # print('<===================== Search Page Content Complete =====================>')
@@ -291,12 +315,10 @@ while Finished == False:
                         except:
                                 loadTimeValue = "error retrieving load time values"
                                 loadTime.append(loadTimeValue)
+       
                         #=================== Attribute Div Items Completed =============================>
 
                         #=================== Detail Attribute Div Items ========================================>
-                        # LEI_dl2 = LEI_Div.find('dl', {'class':'attributes'})
-                        # print(LEI_dl2)
-                        # print(LEI_Div)
                         try:
                                 LEI_registeredBy = LEI_Div.find('dd', {'class':'registered_by'})
                                 registeredByValue = LEI_registeredBy.text
@@ -312,12 +334,81 @@ while Finished == False:
                         except: 
                                 assignmentDateValue = "error retrieving assignment date value"
                                 assignmentDate.append(assignmentDateValue)
+                        
+                        loopDictionary = {
+                        "_id":LeiIdentifierValue,
+                        "EntityStatus":entityStatusValue,
+                        "Country":countryValue, 
+                        "InferredJurisdiction":inferredJurisdictionValue,
+                        "RegisteredAddress":registeredAddressValue,   
+                        "HeadquarteredAddress":headquarterAddressValue, 
+                        "LEI":LeiIdentifierValue,
+                        "Name":name, 
+                        "RegistrationStatus":registrationStatusValue, 
+                        "LegalForm":legalFormValue, 
+                        "BusinessRegistryName":businessRegistryNameValue,        "BusinessRegistryAlert":businessRegistryAlertValue, 
+                        "RegisteredBy":registeredAddressValue, 
+                        "AssignmentDate":assignmentDateValue, 
+                        "RecordLastUpdate":recordLastUpdateValue, 
+                        "NextRenewalDate":nextRenewalDateValue, 
+                        "ItemCount":itemCount,
+                        # "ItemTag":itemTagValue,
+                        "LoadTime":loadTimeValue
+                        }
+                        loopCollection.append(loopDictionary)
+                # print(loopCollection)
+                try:         
+                        # mycol.create_index("_id",unique = True)
+                        for iterloop in loopCollection:
+                                try:
+                                        mycol.updateOne(iterloop,',{upsert: true}')
+                                except pymongo.errors.DuplicateKeyError:
+                                        print('Duplicate url %s' % iterloop)
 
+                except: 
+                        print("mongodb exception thrown on insert operation")
+                        
+
+# docs = [{"_id" : 1, "foo" : "HELLO"}, {"_id" : 2, "Blah" : "Bloh"}]
+# for d in docs:
+#     collection.update_many({'_id':d['_id']}, d,True)
                 #connecting to Mongodb using python
-                myclient = pymongo.MongoClient("mongodb://localhost:27017/")
-                mydb = myclient["mydatabase"]
-                mycol = mydb["id"]
 
+                # myclient = pymongo.MongoClient("mongodb://localhost:27017/")
+                # mydb = myclient["mydatabase"]
+                # mycol = mydb["LEIs"]
+                
+                # mycols = mydb["id", "EntityStatus","Country", "InferredJurisdiction","RegisteredAddress", "HeadquarteredAddress", "LEI" ,"Name" , "RegistrationStatus", "LegalForm", "BusinessRegistryName", "BusinessRegistryAlert", "RegisteredBy", "AssignmentDate", "RecordLastUpdate", "NextRenewalDate", "ItemCount","ItemTag","LoadTime"]
+                # print(mydb)
+
+
+#                 db.post.insert([
+#    {
+#       title: 'MongoDB Overview', 
+#       description: 'MongoDB is no sql database',
+#       by: 'tutorials point',
+#       url: 'http://www.tutorialspoint.com',
+#       tags: ['mongodb', 'database', 'NoSQL'],
+#       likes: 100
+#    },
+	
+#    {
+#       title: 'NoSQL Database', 
+#       description: "NoSQL database doesn't have tables",
+#       by: 'tutorials point',
+#       url: 'http://www.tutorialspoint.com',
+#       tags: ['mongodb', 'database', 'NoSQL'],
+#       likes: 20, 
+#       comments: [	
+#          {
+#             user:'user1',
+#             message: 'My first comment',
+#             dateCreated: new Date(2013,11,10,2,35),
+#             like: 0 
+#          }
+#       ]
+#    }
+# ])
 
                 # class MongoDBPipeline(object):
 
@@ -379,7 +470,7 @@ while Finished == False:
                 else:
                         print("An error was encountered in code please see below for error.")
                         print(ex)
-                        cursor.close()
+                        # cursor.close()
                         exit()
 # ======================= Scrape Iterate Item End ===============================>
 #

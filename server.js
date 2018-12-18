@@ -16,23 +16,19 @@ app.use(bodyParser.json());
 app.use(LEIController);
 
 // Set up promises with mongoose
-mongoose.Promise = global.Promise;
+// mongoose.Promise = global.Promise;
 
 
-mongoose.connect(
-    process.env.MONGODB_URI || "mongodb://localhost/27017",
-    {
-      useMongoClient: true
-    }
-  );
-
-
+// mongoose.connect(
+//     process.env.MONGODB_URI || "mongodb://localhost/27017",
+//     {
+//       useMongoClient: true
+//     }
+//   );
 
 
 app.listen(PORT, function() {
      console.log(`🌎  ==> API Server now listening on PORT ${PORT}!`);
      console.log('Home: ',`http://localhost:6868`);
-     
-     console.log('API: ',`http://localhost:6868/api/LEIs`)
-});
+     });
 
