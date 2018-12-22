@@ -6,7 +6,6 @@ import urllib.request, urllib.parse, urllib.error
 # import substring
 #===================MongoDB====================================>
 import pymongo
-
 try:
     myclient = pymongo.MongoClient("mongodb://localhost:27017/")
 
@@ -20,16 +19,7 @@ mycol = mydb["LEIs"]
 mycol.create_index("_id")
 # mycol.create_index("id")
 
-
-#===================SQLite3====================================>
-# import sqlite3
-# # connection = sqlite3.connect('LEIscrape.db.sqlite')
-# connection = sqlite3.connect('TEST.db.sqlite')
-# cursor = connection.cursor()
-# cursor.execute('DROP TABLE IF EXISTS LEI')
-# cursor.execute('''CREATE TABLE IF NOT EXISTS LEI(id TEXT, EntityStatus TEXT, Country TEXT, InferredJurisdiction TEXT, RegisteredAddress TEXT, HeadquarteredAddress TEXT, LeiIdentifier TEXT, Name TEXT, RegistrationStatus TEXT, LegalForm TEXT, BusinessRegistryName TEXT, BusinessRegistryAlert TEXT, RegisteredBy TEXT, AssignmentDate TEXT, RecordLastUpdate TEXT, NextRenewalDate TEXT, ItemCount INTEGER, ItemTag TEXT , LoadTime TEXT)''')
-
-#check out 
+#check out SSL
 #===================SSL certificate errors=====================>
 import ssl
 ctx = ssl.create_default_context()
@@ -47,12 +37,6 @@ load_dotenv(dotenv_path)
 # dgAPIkey=os.getenv('dataGovAPI')
 # print(dgAPIkey)
 #==============================================================>
-
-#========================TIME variables===============================>
-# ts = time.time()
-
-
-#=====================================================================>
 
 #========misc variable===========================================>
 live = []
@@ -94,10 +78,6 @@ item = ''
 # main = ''
 itemContainer = ''
 
-#========================= Commit to Pandas Dataframe ==============================>
-# df = pd.DataFrame(columns=['id', 'EntityStatus','Country', 'InferredJurisdiction','RegisteredAddress', 'HeadquarteredAddress', 'LEI' ,'Name' , 'RegistrationStatus', 'LegalForm', 'BusinessRegistryName', 'BusinessRegistryAlert', 'RegisteredBy', 'AssignmentDate', 'RecordLastUpdate', 'NextRenewalDate', 'ItemCount','ItemTag','LoadTime'])
-#======================================================>
-
 #==============================Get request of End Value===================================>
 url = 'http://openleis.com/legal_entities/search/page/' + str(page)
 html = urllib.request.urlopen(url,context=ctx).read()
@@ -113,6 +93,7 @@ except:
         print('scrape END value GET failed.  Check HTML for cause.')
 
 
+#===============================================================================>
 #============================= Scrape Iterate Item ==============================>
 while Finished == False:
         try:
@@ -201,7 +182,7 @@ while Finished == False:
                         try:
                                 itemCount = itemCount + 1
                                 itemCountList.append(itemCount)
-                                print(LeiIdentifierValue, str(itemCount))
+                                # print(LeiIdentifierValue, str(itemCount))
                         except:
                                 itemCount = "error retrieving item count value"
                                 itemCountList.append(itemCount)
@@ -335,6 +316,7 @@ while Finished == False:
                                 assignmentDateValue = "error retrieving assignment date value"
                                 assignmentDate.append(assignmentDateValue)
                         
+
                         loopDictionary = {
                         "_id":LeiIdentifierValue,
                         "EntityStatus":entityStatusValue,
@@ -346,7 +328,8 @@ while Finished == False:
                         "Name":name, 
                         "RegistrationStatus":registrationStatusValue, 
                         "LegalForm":legalFormValue, 
-                        "BusinessRegistryName":businessRegistryNameValue,        "BusinessRegistryAlert":businessRegistryAlertValue, 
+                        "BusinessRegistryName":businessRegistryNameValue,        
+                        "BusinessRegistryAlert":businessRegistryAlertValue, 
                         "RegisteredBy":registeredAddressValue, 
                         "AssignmentDate":assignmentDateValue, 
                         "RecordLastUpdate":recordLastUpdateValue, 
@@ -355,97 +338,19 @@ while Finished == False:
                         # "ItemTag":itemTagValue,
                         "LoadTime":loadTimeValue
                         }
+                        # collection build while looping through records
                         loopCollection.append(loopDictionary)
-                # print(loopCollection)
+                
+                # below loop to issue upsert command to update or insert depending on if existing record or not.
                 try:         
-                        # mycol.create_index("_id",unique = True)
+                        # loop collection is an array of dictionaries
                         for iterloop in loopCollection:
-                                try:
-                                        mycol.updateOne(iterloop,',{upsert: true}')
-                                except pymongo.errors.DuplicateKeyError:
-                                        print('Duplicate url %s' % iterloop)
+                                # the update or insert of dictionary items into mongo
+                                mydb.LEIs.update_one({'_id':iterloop['_id']}, {'$set':iterloop}, upsert=True)
 
                 except: 
                         print("mongodb exception thrown on insert operation")
-                        
-
-# docs = [{"_id" : 1, "foo" : "HELLO"}, {"_id" : 2, "Blah" : "Bloh"}]
-# for d in docs:
-#     collection.update_many({'_id':d['_id']}, d,True)
-                #connecting to Mongodb using python
-
-                # myclient = pymongo.MongoClient("mongodb://localhost:27017/")
-                # mydb = myclient["mydatabase"]
-                # mycol = mydb["LEIs"]
-                
-                # mycols = mydb["id", "EntityStatus","Country", "InferredJurisdiction","RegisteredAddress", "HeadquarteredAddress", "LEI" ,"Name" , "RegistrationStatus", "LegalForm", "BusinessRegistryName", "BusinessRegistryAlert", "RegisteredBy", "AssignmentDate", "RecordLastUpdate", "NextRenewalDate", "ItemCount","ItemTag","LoadTime"]
-                # print(mydb)
-
-
-#                 db.post.insert([
-#    {
-#       title: 'MongoDB Overview', 
-#       description: 'MongoDB is no sql database',
-#       by: 'tutorials point',
-#       url: 'http://www.tutorialspoint.com',
-#       tags: ['mongodb', 'database', 'NoSQL'],
-#       likes: 100
-#    },
-	
-#    {
-#       title: 'NoSQL Database', 
-#       description: "NoSQL database doesn't have tables",
-#       by: 'tutorials point',
-#       url: 'http://www.tutorialspoint.com',
-#       tags: ['mongodb', 'database', 'NoSQL'],
-#       likes: 20, 
-#       comments: [	
-#          {
-#             user:'user1',
-#             message: 'My first comment',
-#             dateCreated: new Date(2013,11,10,2,35),
-#             like: 0 
-#          }
-#       ]
-#    }
-# ])
-
-                # class MongoDBPipeline(object):
-
-                #         def __init__(self):
-                #                 connection = pymongo.MongoClient(
-                #                         settings['MONGODB_SERVER'],
-                #                         settings['MONGODB_PORT']
-                #                 )   
-                #                 db = connection[settings['MONGODB_DB']]
-                #                 self.collection = db[settings['MONGODB_COLLECTION']]
-                #         def process_item(self, item, spider):
-                #                 valid = True
-                #                 for data in item:
-                #                         if not data:
-                #                                 valid = False
-                #                                 raise DropItem("Missing {0}!".format(data))
-                #                 if valid:
-                #                         self.collection.insert(dict(item))
-                #                         log.msg("Question added to MongoDB database!",
-                #                                 level=log.DEBUG, spider=spider)
-                #                 return item
-
-        
-                #==============================PandasDataframe===========================================>
-                # df.append({'id':LeiIdentifier, 'EntityStatus':entityStatus, 'Country':countryList, 'InferredJurisdiction':inferredJurisdiction ,'RegisteredAddress':registeredAddress, 'HeadquarteredAddress':headquarterAddress ,'LEI':LeiIdentifier, 'Name':nameList ,'RegistrationStatus':registrationStatus, 'LegalForm':legalForm, 'BusinessRegistryName': businessRegistryName, 'BusinessRegistryAlert': businessRegistryAlert, 'RegisteredBy':registeredBy, 'AssignmentDate':assignmentDate , 'RecordLastUpdate': recordLastUpdate, 'NextRenewalDate': nextRenewalDate,
-                # 'ItemCount':itemCount,
-                # 'ItemTag':itemTag,
-                # 'LoadTime':loadTime},ignore_index=True)
-                # print(df.info())
-
-                #=============================SQLlite attempt=======================================>
-                #looping through to unpack lists of collected LEI data.
-                # for i in range(len(LeiIdentifier)):
-                #         cursor.execute('''INSERT INTO Lei(id, EntityStatus, Country, InferredJurisdiction, RegisteredAddress, HeadquarteredAddress, LeiIdentifier, Name, RegistrationStatus, LegalForm, BusinessRegistryName, BusinessRegistryAlert, RegisteredBy, AssignmentDate, RecordLastUpdate, NextRenewalDate, ItemCount, ItemTag, LoadTime) 
-                #         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''', 
-                #         (LeiIdentifier[i], entityStatus[i], countryList[i], inferredJurisdiction[i], registeredAddress[i], headquarterAddress[i], LeiIdentifier[i], nameList[i], registrationStatus[i], legalForm[i], businessRegistryName[i], businessRegistryAlert[i], registeredBy[i], assignmentDate[i], recordLastUpdate[i], nextRenewalDate[i], itemCountList[i], itemTag[i], loadTime[i],))
-                # connection.commit()
+                        print(e)
 
                 #====================================================================>
                 print('last page scrape completed: ', page)
@@ -470,7 +375,6 @@ while Finished == False:
                 else:
                         print("An error was encountered in code please see below for error.")
                         print(ex)
-                        # cursor.close()
                         exit()
 # ======================= Scrape Iterate Item End ===============================>
 #
