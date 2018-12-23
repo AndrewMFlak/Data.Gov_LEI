@@ -1,0 +1,34 @@
+{
+  "name": "data.gov.leis",
+  "version": "0.1.0",
+  "private": true,
+  "main": "Server.js",
+  "scripts": {
+    "debug": "concurrently \"node --inspect-brk=43240 server.js\" \"npm run client\"",
+    "start": "if-env NODE_ENV=production && npm run server || npm run start:dev",
+    "server": "node server.js",
+    "start:dev": "concurrently \"nodemon --ignore 'client/*'\" \"npm run client\"",
+    "seed": "node scripts/seedDB.js",
+    "client": "cd client && npm run start",
+    "install": "cd client && npm install",
+    "build": "cd client && npm run build",
+    "heroku-postbuild": "npm run build"
+  },
+  "devDependencies": {
+    "concurrently": "^3.5.0",
+    "nodemon": "^1.11.0"
+  },
+  "dependencies": {
+    "axios": "^0.18.0",
+    "body-parser": "^1.17.2",
+    "express": "^4.15.4",
+    "mongoose": "^4.11.7",
+    "react": "^16.6.3",
+    "react-dom": "^16.6.3",
+    "react-redux": "^5.1.1",
+    "react-router-dom": "^4.3.1",
+    "react-scripts": "2.1.1",
+    "redux-thunk": "^2.3.0",
+    "sqlite3": "^4.0.4"
+  }
+}

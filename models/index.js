@@ -1,3 +1,3 @@
 module.exports = {
-    LEI: require("./LEI")
+    LEIs: require("./LEIs")
 };

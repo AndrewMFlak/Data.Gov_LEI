@@ -16,17 +16,25 @@ app.use(bodyParser.json());
 app.use(LEIController);
 
 // Set up promises with mongoose
-// mongoose.Promise = global.Promise;
+mongoose.Promise = global.Promise;
 
-
-
-// mongoose.connect(
-//     process.env.MONGODB_URI || "mongodb://localhost/27017",
-//     {
-//       useMongoClient: true
-//     }
-//   );
-
+// Connect to the Mongo DB
+mongoose.connect('mongodb://localhost/27017',
+//     process.env.MONGODB_URI || "mongodb://localhost/LEIs",
+    {
+      useMongoClient: true
+    }
+  ).then(() => {
+     console.log("Connected to Database");
+     }).catch((err) => {
+         console.log("Not Connected to Database ERROR! ", err);
+         process.exit(1);
+     });
+//   mongoose.connect('mongodb://localhost/testdb').then(() => {
+//      console.log("Connected to Database");
+//      }).catch((err) => {
+//          console.log("Not Connected to Database ERROR! ", err);
+//      });
 
 app.listen(PORT, function() {
      console.log(`🌎  ==> API Server now listening on PORT ${PORT}!`);

@@ -1,31 +1,19 @@
 const path = require("path");
 const router = require("express").Router();
-
-// const db = require("../TEST.db.sqlite")
-// if processing a user input we would pass through a mode.  because no we will skip this route.
-// const db = require("../models");
-
-// const sqlite3 = require('sqlite3').verbose();
-
-// establishes database connection to sqlite
-// let db = new sqlite3.Database('../TEST.db.sqlite', (err) => {
-//     if (err) {
-//         return console.log(err.message);
-//     }
-//     console.log('Connected to SQLite database');
-// });
-
-// console.log(db)
-
-
-
+const db = require("../models");
 
 const LEIFunctions = {
     findAll: function(req, res) {
-        db.LEI
+        db.LEIs
             .find(req.query)
-            .sort({Country:ascending})
+            // .sort({Country:ascending})
             .then(dbModel =>res.json(dbModel))
+            .catch(err => res.status(422).json(err));
+    },
+    findById: function(req, res) {
+        db.LEIs
+            .findById(req.params.id)
+            .then(dbModel => res.json(dbModel))
             .catch(err => res.status(422).json(err));
     }
 }
@@ -34,6 +22,9 @@ const LEIFunctions = {
 
 router.get("/api/LEIs", LEIFunctions.findAll)
 
+router.get("/api/LEIs/:id", LEIFunctions.findById)
+
+// UPDATE
 // If no API routes are hit, send the React app
 // router.use(functions (req, res) {
 //     res.send(path.join(__dirname,

@@ -343,10 +343,11 @@ while Finished == False:
                 
                 # below loop to issue upsert command to update or insert depending on if existing record or not.
                 try:         
-                        # loop collection is an array of dictionaries
-                        for iterloop in loopCollection:
+                        mydb.LEIs.update_many({},{}, upsert=True)
+                        # loop array of dictionaries
+                        # for iterloop in loopCollection:
                                 # the update or insert of dictionary items into mongo
-                                mydb.LEIs.update_one({'_id':iterloop['_id']}, {'$set':iterloop}, upsert=True)
+                                # mydb.LEIs.update_one({'_id':iterloop['_id']}, {'$set':iterloop}, upsert=True)
 
                 except: 
                         print("mongodb exception thrown on insert operation")
