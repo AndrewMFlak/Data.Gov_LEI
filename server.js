@@ -10,7 +10,7 @@ app.use(bodyParser.urlencoded({extended:false}));
 app.use(bodyParser.json());
 
 // Serve up static assets
-// app.use(express.static("client/build"));
+app.use(express.static("client/build"));
 
 // Add routes, both API and view
 app.use(LEIController);
@@ -19,22 +19,17 @@ app.use(LEIController);
 mongoose.Promise = global.Promise;
 
 // Connect to the Mongo DB
-mongoose.connect('mongodb://localhost/27017',
-//     process.env.MONGODB_URI || "mongodb://localhost/LEIs",
+mongoose.connect(
+    process.env.MONGODB_URI || "mongodb://localhost/LEIs",
     {
       useMongoClient: true
     }
-  ).then(() => {
-     console.log("Connected to Database");
+).then(() => {
+     console.log("Connected to Database!!!!");
      }).catch((err) => {
          console.log("Not Connected to Database ERROR! ", err);
          process.exit(1);
      });
-//   mongoose.connect('mongodb://localhost/testdb').then(() => {
-//      console.log("Connected to Database");
-//      }).catch((err) => {
-//          console.log("Not Connected to Database ERROR! ", err);
-//      });
 
 app.listen(PORT, function() {
      console.log(`🌎  ==> API Server now listening on PORT ${PORT}!`);
