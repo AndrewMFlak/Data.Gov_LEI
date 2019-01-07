@@ -1,104 +1,123 @@
-import csv
-import urllib2
-import sys
-import re
-import base64
-from urlparse import urlparse
 import pandas as pd
+import time
+import datetime
 import io
+import urllib.request
+import urllib.parse
+from urllib.request import urlopen
+import json
+from pandas.io.json import json_normalize
 
+#===============SSL certificate errors===============>
+import ssl
+ctx = ssl.create_default_context()
+ctx.check_hostname = False
+ctx.verify_mode = ssl.CERT_NONE
 
-#==================ENV processing=============================>
+#=======================.ENV========================>
 import os
 from os.path import join, dirname
 from dotenv import load_dotenv
-dotenv_path = join(dirname(__file__),'.env')
+dotenv_path = join(dirname(__file__),'../.env')
 load_dotenv(dotenv_path)
-
-
-
-
-# url path to open leis site
-url = 'http://openleis.com/legal_entities.csv'
-
 
 # data.gov details committed to variables
 username=os.getenv('dGovUsername')
 password=os.getenv('dGovPassword')
 
+#======================================================>
 
-req = urllib2.Request(url)
-try:
-    handle = urllib2.urlopen(req)
-except IOError as e:
-        #here we want to fail
-    pass
-else:
-    #if we don't fail then the page isn't protected
-    print("This page is not protected by Authentication")
-    sys.exit(1)
+#=========================MongoDB=========================>
+import pymongo
 
-if not hasattr(e, 'code') or e.code != 401:
-    # we got an error - but not a 401 error
-    print("This page isn't protected by authentication.")
-    print("But we failed for some other reason")
-    sys.exit(1)
+#bulk upload
+def write_df_to_mongoDB(
+    my_df,\
+    database_name = 'OpenLeisJSON',\
+    collection_name = 'leisJSON',\
+    server = 'localhost',\
+    mongodb_port = 27017,\
+    chunk_size = 100):
+    client = pymongo.MongoClient('localhost',int(mongodb_port))
+    db = client[database_name]
+    collection = db[collection_name]
+    # To write
+    collection.delete_many({})  # Destroy the collection
+    #aux_df=aux_df.drop_duplicates(subset=None, keep='last') # To avoid repetitions
+    my_list = my_df.to_dict('records')
+    l =  len(my_list)
+    ran = range(l)
+    steps=ran[chunk_size::chunk_size]
+    steps.extend([l])
 
-authline = e.headers['www-authenticate']
-# this gerts the www-authenticate line from the headers
-# which has the authentication scheme and realm in it
+    # Inser chunks of the dataframe
+    i = 0
+    for j in steps:
+        print(j)
+        collection.insert_many(my_list[i:j]) # fill de collection
+        i = j
 
-authobj = re.compile(
-        r'''(?:\s*www-authenticate\s*:)?\s*(\w*)\s+realm=['"]([^'"]+)['"]''',re.IGNORECASE)
-    # this regular expression is used to extract scheme and realm
-matchobj = authobj.match(authline)
+    print('Done')
+    return
 
+#DISCARDED MONGODB WORKFLOW
+# try: 
+#     myclient = pymongo.MongoClient("mongodb://localhost:27017/")
+# except pymongo.errors.ConnectionsFailure as e:
+#     print(e)
 
-if not matchobj:
-    # if the authline isn't matched by the regular expression
-    # then something is wrong
-    print('The authentication header is badly formed.')
-    print(authline)
-    sys.exit(1)
+# mydb = myclient["openLeisJSON"]
+# mydb.drop_collection("leisJSON")
+# mycol = mydb["leisJSON"]
 
-scheme = matchobj.group(1)
-realm = matchobj.group(2)
-# here we've extracted the scheme
-# and the realm from the header
-if scheme.lower() != 'basic':
-    print('This example only works with BASIC authentication.')
-    sys.exit(1)
-
-base64string = base64.encodestring(
-                '%s:%s' % (username, password))[:-1]
-authheader =  "Basic %s" % base64string
-req.add_header("Authorization", authheader)
-try:
-    handle = urllib2.urlopen(req)
-except IOError as e:
-    # here we shouldn't fail if the username/password is right
-    print("It looks like the username or password is wrong.")
-    sys.exit(1)
-thepage = handle.read()
-
-# urlData = urllib.request.get(url).content
-# rawData = pd.read_csv(io.StringIO(urlData.decode('utf-8')))
-# print(rawData)
+# mycol.create_index("_id")
 
 
 
-#csv file extension
-# path = '/legal_entities.csv'
-# data = pd.read_csv(url)
-# response = getThatShit.urlopen(url , path)
-    # html = response.read()
-# try:
-#     data = pd.read_csv(url)
-#     print("pandas csv succss")
-# except:
-#     print("error accessing csv")
+#==========================================================>
 
-# for row in cr:
-#     print(row)
+#This should be the base url you wanted to access.
+baseurl = 'http://openleis.com'
+path = '/legal_entities.csv'
+pathJSON = '/legal_entities.json'
+# page 1 sample
+# http://openleis.com/legal_entities.json
+# http://openleis.com/legal_entities/search/page/1.json
+# page 2 sample
+# http://openleis.com/legal_entities/search/page/2.json
+# r = requests.get(baseurl + path, auth=(username,password))
+
+#=====================variables==========================>
+Finished = False
+countItem = 1
+#=============================================================>
+
+while Finished == False:
+
+    try:
+        urlData = urllib.request.urlopen(baseurl + pathJSON)
+        data = urlData.read()
+        extractedContent = json.loads(data)
+        # encoding = urlData.info().get_content_charset('utf-8')
+        # decoding = data.decode(encoding)
+        Finished = True
+
+        # df = pd.DataFrame([extractedContent])
+        # def dict_to_df
+
+    except Exception as e:
+        print(str(e))
+    
+    # print(df.head())
+my_df = pd.DataFrame.from_dict(json_normalize(extractedContent),orient='columns')
+
+# for item in extractedContent:
+#     print(item)
+#     print(countItem)
+#     countItem + 1
+print(my_df.head())
+print("Finished Running")
 
 
+
+# 'http://openleis.com/legal_entities.json'
