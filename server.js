@@ -34,5 +34,6 @@ mongoose.connect(
 app.listen(PORT, function() {
      console.log(`🌎  ==> API Server now listening on PORT ${PORT}!`);
      console.log('Home: ',`http://localhost:6868`);
+     console.log('Home: ',`http://localhost:6868/LEIs/v1.0`);
      });
 

@@ -3,74 +3,74 @@ import ReactLoading from 'react-loading';
 import PropTypes from 'prop-types'
 import { Link } from "react-router-dom";
 
-class leiDetail extends React.Component {
+class leiDetails extends React.Component {
 
     componentDidMount = () => {
         this.props.onPageLoad(this.props.leiName);
     }
 
-    getDetails = (isLoading, leiDetail) => {
+    getDetails = (isLoading, leiDetails) => {
         if (isLoading) {
             return <ReactLoading type="spin" color="0000FF" height={100} width={100} />
-        } else if (Object.keys(leiDetail).length !== 0) {
+        } else if (Object.keys(leiDetails).length !== 0) {
             return (
                 <div className="text-center" >
                     <h3>
-                        LeiIdentifier: {leiDetail.LeiIdentifier}
+                        LeiIdentifier: {leiDetails.LeiIdentifier}
                     </h3>
                     <h3>
-                        Name: {leiDetail.Name}
+                        Name: {leiDetails.Name}
                     </h3>
                     <h3>
-                        EntityStatus: {leiDetail.EntityStatus}
+                        EntityStatus: {leiDetails.EntityStatus}
                     </h3>
                     <h3>
-                        Country: {leiDetail.Country}
+                        Country: {leiDetails.Country}
                     </h3>
                     <h3>
-                        InferredJurisdiction: {leiDetail.InferredJurisdiction}
+                        InferredJurisdiction: {leiDetails.InferredJurisdiction}
                     </h3>
                     <h3>
-                        RegisteredAddress: {leiDetail.RegisteredAddress}
+                        RegisteredAddress: {leiDetails.RegisteredAddress}
                     </h3>
                     <h3>
-                        HeadquarteredAddress: {leiDetail.HeadquarteredAddress}
+                        HeadquarteredAddress: {leiDetails.HeadquarteredAddress}
                     </h3>
                     <h3>
-                        RegistrationStatus: {leiDetail.RegistrationStatus}
+                        RegistrationStatus: {leiDetails.RegistrationStatus}
                     </h3>
                     <h3>
-                        LegalForm: {leiDetail.LegalForm}
+                        LegalForm: {leiDetails.LegalForm}
                     </h3>
                     <h3>
-                        RegistrationStatus: {leiDetail.RegistrationStatus}
+                        RegistrationStatus: {leiDetails.RegistrationStatus}
                     </h3>
                     <h3>
-                        BusinessRegistryName: {leiDetail.BusinessRegistryName}
+                        BusinessRegistryName: {leiDetails.BusinessRegistryName}
                     </h3>
                     <h3>
-                        RegistrationStatus: {leiDetail.RegistrationStatus}
+                        RegistrationStatus: {leiDetails.RegistrationStatus}
                     </h3>
                     <h3>
-                        BusinessRegistryAlert: {leiDetail.BusinessRegistryAlert}
+                        BusinessRegistryAlert: {leiDetails.BusinessRegistryAlert}
                     </h3>
                     <h3>
-                        RegisteredBy: {leiDetail.RegisteredBy}
+                        RegisteredBy: {leiDetails.RegisteredBy}
                     </h3>
                     <h3>
-                        RecordLastUpdate: {leiDetail.RecordLastUpdate}
+                        RecordLastUpdate: {leiDetails.RecordLastUpdate}
                     </h3>
                     <h3>
-                        NextRenewalDate: {leiDetail.NextRenewalDate}
+                        NextRenewalDate: {leiDetails.NextRenewalDate}
                     </h3>
                     <h3>
-                        LoadTime: {leiDetail.LoadTime}
+                        LoadTime: {leiDetails.LoadTime}
                     </h3>
                     <h3>
-                        ItemTag: {leiDetail.ItemTag}
+                        ItemTag: {leiDetails.ItemTag}
                     </h3>
                     <h3>
-                        AssignmentDate: {leiDetail.AssignmentDate}
+                        AssignmentDate: {leiDetails.AssignmentDate}
                     </h3>
                 </div>
             )
@@ -81,11 +81,11 @@ class leiDetail extends React.Component {
 
     render() {
 
-        const { isLoading, leiDetail } = this.props 
+        const { isLoading, leiDetails } = this.props 
 
         return (
             <div>
-                {this.getDetails(isLoading, leiDetail)}
+                {this.getDetails(isLoading, leiDetails)}
                 <Link to="/">← Back to List</Link>
             </div>
         );
@@ -93,11 +93,11 @@ class leiDetail extends React.Component {
     }
 }
 
-leiDetail.propTypes = {
+leiDetails.propTypes = {
     isLoading: PropTypes.bool.isRequired,
     leiDetail: PropTypes.object.isRequired,
     leiName: PropTypes.string.isRequired,
     onPageLoad: PropTypes.func.isRequired
 }
 
-export default leiDetail;
+export default leiDetails;

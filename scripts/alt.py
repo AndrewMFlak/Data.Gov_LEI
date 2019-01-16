@@ -17,6 +17,7 @@ ctx.verify_mode = ssl.CERT_NONE
 #=======================.ENV========================>
 import os
 from os.path import join, dirname
+import dotenv
 from dotenv import load_dotenv
 dotenv_path = join(dirname(__file__),'../.env')
 load_dotenv(dotenv_path)
@@ -29,49 +30,67 @@ password=os.getenv('dGovPassword')
 
 #=========================MongoDB=========================>
 import pymongo
+# from pymongo import MongoClient
+try:
+    myclient = pymongo.MongoClient("mongodb://localhost:27017/")
+except pymongo.errors.ConnectionFailure as e:
+    print(e)
+my_list = []
+my_df = ''
+steps = []
+listLength= 0
+db = myclient["openLeisJSON"]
+col = db["leisJSON"]
 
-#bulk upload
+# count variables not used
+ct = 0
+# workflow page variables
+page = 1
+End = 0
+#FUNCTIONS
+
+def getEnd(page):
+    url = 'http://openleis.com/legal_entities/search/page/' + str(page)
+    html = urllib.request.urlopen(url,context=ctx).read()
+    soup = BeautifulSoup(html, 'html.parser')
+    parentDiv = soup.find('section', {'class':'results row'})
+    contentContainer = parentDiv.find('ul', {'class':'results-list with-flags'})
+    itemContainer = contentContainer('li')
+    try:
+        endChild = parentDiv.find('a', {'class':'next_page'})
+        EndNode = endChild.find_previous_sibling()
+        End = int(EndNode.text)
+    except:
+        print('scrape END value GET failed.  Check HTML for cause.')
+
+#Write dataframe from openLeis JSON and push to MongoDB
 def write_df_to_mongoDB(
-    my_df,\
-    database_name = 'OpenLeisJSON',\
+    my_df = my_df,\
+    database_name = 'openLeisJSON',\
     collection_name = 'leisJSON',\
     server = 'localhost',\
     mongodb_port = 27017,\
-    chunk_size = 100):
-    client = pymongo.MongoClient('localhost',int(mongodb_port))
-    db = client[database_name]
-    collection = db[collection_name]
+    chunk_size = 30):
+    col.create_index("_id")
     # To write
-    collection.delete_many({})  # Destroy the collection
+
+    # collection.delete_many({})  
+    # Destroy the collection
     #aux_df=aux_df.drop_duplicates(subset=None, keep='last') # To avoid repetitions
     my_list = my_df.to_dict('records')
-    l =  len(my_list)
-    ran = range(l)
-    steps=ran[chunk_size::chunk_size]
-    steps.extend([l])
-
-    # Inser chunks of the dataframe
-    i = 0
-    for j in steps:
-        print(j)
-        collection.insert_many(my_list[i:j]) # fill de collection
-        i = j
-
-    print('Done')
+       
+    for item in my_list:
+        # print(item)
+        try:
+            db.leisJSON.update_one({'_id':item['lei']}, {'$set':item},upsert=True)
+            # print(item)
+            # print("Insert_One Success")
+        except pymongo.errors.ConnectionFailure as e: 
+            # print("Insert_One Failed")
+            print("Insert_OneError:",e)
+       
+    print('Script Done')
     return
-
-#DISCARDED MONGODB WORKFLOW
-# try: 
-#     myclient = pymongo.MongoClient("mongodb://localhost:27017/")
-# except pymongo.errors.ConnectionsFailure as e:
-#     print(e)
-
-# mydb = myclient["openLeisJSON"]
-# mydb.drop_collection("leisJSON")
-# mycol = mydb["leisJSON"]
-
-# mycol.create_index("_id")
-
 
 
 #==========================================================>
@@ -91,8 +110,14 @@ pathJSON = '/legal_entities.json'
 Finished = False
 countItem = 1
 #=============================================================>
-
+# Get this work started!!!!
 while Finished == False:
+    # Start of getEnd function
+    while End == 0:
+        try:
+            getEnd(page)
+        except Exception as e:
+            print("getEnd function failed")
 
     try:
         urlData = urllib.request.urlopen(baseurl + pathJSON)
@@ -110,13 +135,16 @@ while Finished == False:
     
     # print(df.head())
 my_df = pd.DataFrame.from_dict(json_normalize(extractedContent),orient='columns')
+my_df.rename(columns=lambda x: x.replace('.', ''), inplace=True)
 
-# for item in extractedContent:
-#     print(item)
-#     print(countItem)
-#     countItem + 1
-print(my_df.head())
-print("Finished Running")
+# Call dataFrame to MongoDB formula
+# WORKFLOW
+
+
+write_df_to_mongoDB(my_df)
+
+print("End: ",End)
+print("Script Finished Running")
 
 
 

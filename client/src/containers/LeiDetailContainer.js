@@ -1,5 +1,5 @@
 import { connect } from 'react-redux'
-import leiDetail from '../components/leiDetail'
+import leiDetails from '../components/leiDetails'
 
 
 const mapStateToProps = (state) => ({
@@ -16,6 +16,6 @@ const mapDispatchToProps = (dispatch) => ({
 
 const DetailContainer = connect(
     mapStateToProps,
-    mapDispatchToProps)(leiDetail)
+    mapDispatchToProps)(leiDetails)
 
 export default DetailContainer

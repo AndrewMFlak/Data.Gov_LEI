@@ -1,10 +1,10 @@
 import { connect } from 'react-redux'
 import { fetchLEI } from '../actions'
-import leiDetail from '../components/leiDetail'
+import leiDetails from '../components/leiDetails'
 
 const mapStateToProps = (state) => ({
     isLoading: state.details.isLoading,
-    leiDetail: state.details.data,
+    leiDetails: state.details.data,
     leiName: state.details.leiName
 })
 
@@ -17,6 +17,6 @@ const mapDispatchToProps = (dispatch) => ({
 const DetailContainer = connect(
     mapStateToProps,
     mapDispatchToProps
-)(leiName)
+)(leiDetails)
 
 export default DetailContainer
