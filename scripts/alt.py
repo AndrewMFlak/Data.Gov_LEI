@@ -103,8 +103,8 @@ page = 1
 while End == 0:
     try:
         # End get value and declare as variable
-        # End = getEnd(page)
-        End = 30
+        End = getEnd(page)
+        # End = 30
         # print("End: ",End)
 
     except Exception as e:
@@ -141,7 +141,7 @@ while Finished == False:
     lastPage = page
     print("last page completed:",lastPage)
     # page End check to see if we should continue
-    if page > End:
+    if lastPage == End:
         print('Data.gov scrape complete.')
         Finished = True
         exit
